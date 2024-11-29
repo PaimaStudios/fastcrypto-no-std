@@ -3,7 +3,7 @@
 
 use crate::{
     error::FastCryptoError,
-    traits::{FromUniformBytes, ToFromBytes},
+    traits::{ToFromBytes},
 };
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -14,7 +14,7 @@ pub struct PrivateSeed<const RECOMMENDED_LENGTH: usize, const FIXED_LENGTH_ONLY:
     bytes: Vec<u8>,
 }
 
-impl<const N: usize, const B: bool> FromUniformBytes<N> for PrivateSeed<N, B> {}
+// impl<const N: usize, const B: bool> FromUniformBytes<N> for PrivateSeed<N, B> {}
 
 impl<const N: usize, const B: bool> AsRef<[u8]> for PrivateSeed<N, B> {
     fn as_ref(&self) -> &[u8] {

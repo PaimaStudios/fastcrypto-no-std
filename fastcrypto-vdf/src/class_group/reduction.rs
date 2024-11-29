@@ -5,9 +5,9 @@ use crate::class_group::QuadraticForm;
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::{One, Signed};
-use std::cmp::Ordering;
-use std::mem::swap;
-use std::ops::ShrAssign;
+use core::cmp::Ordering;
+use core::mem::swap;
+use core::ops::ShrAssign;
 
 impl QuadraticForm {
     /// Return true if this form is in normal form: -a < b <= a.

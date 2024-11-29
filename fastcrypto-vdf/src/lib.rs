@@ -1,6 +1,6 @@
 // Copyright (c) 2022, Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
-
+#![no_std]
 #[cfg(any(test, feature = "experimental"))]
 pub mod class_group;
 
@@ -12,3 +12,5 @@ pub mod math;
 
 #[cfg(any(test, feature = "experimental"))]
 pub mod rsa_group;
+
+extern crate alloc;

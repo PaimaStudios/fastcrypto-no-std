@@ -2,10 +2,10 @@
 resolver = "2"
 members = [
     "fastcrypto",
-    "fastcrypto-derive",
-    "fastcrypto-tbls",
-    "fastcrypto-zkp",
-    "fastcrypto-cli",
+    #"fastcrypto-derive",
+    #"fastcrypto-tbls",
+    #"fastcrypto-zkp",
+    #"fastcrypto-cli",
     "fastcrypto-vdf"
 ]
 

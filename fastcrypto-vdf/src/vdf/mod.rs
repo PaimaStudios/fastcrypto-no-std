@@ -7,7 +7,8 @@
 use fastcrypto::error::FastCryptoResult;
 
 pub mod pietrzak;
-pub mod wesolowski;
+//mod bcs;
+//pub mod wesolowski;
 
 /// This represents a Verifiable Delay Function (VDF) construction.
 pub trait VDF {

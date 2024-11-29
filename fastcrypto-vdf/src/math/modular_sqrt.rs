@@ -8,7 +8,7 @@ use fastcrypto::error::FastCryptoResult;
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::{One, Signed, ToPrimitive, Zero};
-
+use core::result::Result::Ok;
 /// Compute a modular square root of a modulo p with p prime if this exists. This function does not
 /// check that p is prime and if it is not, the result is undefined. If check_legendre is set to
 /// true, the function verifies that a is a quadratic residue modulo p and returns None otherwise.

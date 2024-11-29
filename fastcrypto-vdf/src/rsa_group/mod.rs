@@ -4,12 +4,12 @@
 use crate::math::parameterized_group::ParameterizedGroupElement;
 use fastcrypto::groups::Doubling;
 use modulus::RSAModulus;
-use num_bigint::{BigUint, RandBigInt};
+use num_bigint::{BigUint};
 use num_traits::One;
-use rand::SeedableRng;
-use rand_chacha::ChaCha20Rng;
+// use rand::SeedableRng;
+// use rand_chacha::ChaCha20Rng;
 use serde::Serialize;
-use std::ops::{Add, Mul};
+use core::ops::{Add, Mul};
 
 pub mod modulus;
 
@@ -39,12 +39,12 @@ impl<'a> RSAGroupElement<'a> {
         &self.value
     }
 
-    /// Generate a random element of the subgroup <i>Z<sub>N</sub><sup>*</sup> / <±1></i>
-    /// using the given seed.
-    pub fn from_seed(seed: [u8; 32], modulus: &'a RSAModulus) -> Self {
-        let mut rng = ChaCha20Rng::from_seed(seed);
-        Self::new(rng.gen_biguint_below(&modulus.half), modulus)
-    }
+    // /// Generate a random element of the subgroup <i>Z<sub>N</sub><sup>*</sup> / <±1></i>
+    // /// using the given seed.
+    // pub fn from_seed(seed: [u8; 32], modulus: &'a RSAModulus) -> Self {
+    //     //let mut rng = ChaCha20Rng::from_seed(seed);
+    //     //Self::new(rng.gen_biguint_below(&modulus.half), modulus)
+    // }
 }
 
 impl Add<&Self> for RSAGroupElement<'_> {

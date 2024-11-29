@@ -1,8 +1,8 @@
 // Copyright (c) 2022, Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::mem::swap;
-use std::ops::{RemAssign, ShrAssign};
+use core::mem::swap;
+use core::ops::{RemAssign, ShrAssign};
 
 use num_bigint::BigInt;
 use num_integer::Integer;

@@ -3,6 +3,7 @@
 
 pub(crate) mod crt;
 pub(crate) mod extended_gcd;
+#[cfg(feature = "proving")]
 pub mod hash_prime;
 pub mod jacobi;
 pub(crate) mod modular_sqrt;

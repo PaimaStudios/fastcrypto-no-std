@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 use serde::Serializer;
+use alloc::vec::Vec;
 
 pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<BigInt, D::Error>
 where

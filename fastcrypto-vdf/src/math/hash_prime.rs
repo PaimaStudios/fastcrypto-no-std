@@ -7,7 +7,9 @@ use fastcrypto::hash::{HashFunction, Sha256};
 use num_bigint::BigUint;
 use num_prime::nt_funcs::is_prime;
 use num_prime::PrimalityTestConfig;
-use std::cmp::min;
+use core::cmp::min;
+extern crate alloc;
+use alloc::{vec, vec::Vec};
 
 struct HashPrimeIterator {
     seed: Vec<u8>,

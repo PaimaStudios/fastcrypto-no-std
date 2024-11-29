@@ -10,24 +10,29 @@ repository = "https://github.com/MystenLabs/fastcrypto"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+#alloc = "1.82.0"
 fastcrypto = { path = "../fastcrypto" }
-num-bigint = { version = "0.4.4", features = ["serde", "rand"] }
-num-traits = "0.2.16"
-num-integer = "0.1.45"
-num-prime = { version = "0.4.3", features = ["big-int"] }
-rand = "0.8.5"
-rand_chacha = "0.3.1"
-serde.workspace = true
-bcs.workspace = true
-lazy_static = "1.4.0"
+num-bigint = { version = "0.4.4", default-features = false, features = ["serde"] }
+num-traits = { version = "0.2.16", default-features = false }
+num-integer = { version = "0.1.45", default-features = false }
+num-prime = { version = "=0.4.4", features = ["big-int"], optional = true}
+#rand = "0.8.5"
+#rand_chacha = "0.3.1"
+serde = { version = "1.0.152", default-features = false }
+#serde.workspace = true
+#bcs.workspace = true
+#bcs = { path = "../../bcs" }
+postcard = { version = "1.0.10", features = ["alloc"] }
+#lazy_static = "1.4.0"
 
 [features]
 experimental = []
+proving = []
 
 [dev-dependencies]
 hex = "0.4.3"
 criterion = "0.5.1"
-rand = "0.8.4"
+#rand = "0.8.4"
 num-bigint-dig = "0.8.4"
 
 [[bench]]

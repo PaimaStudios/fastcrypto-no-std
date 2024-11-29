@@ -3,18 +3,26 @@
 // SPDX-License-Identifier: Apache-2.0
 use crate::error::FastCryptoResult;
 use crate::{
-    encoding::{Base64, Encoding},
+    //encoding::{Base64, Encoding},
     error::FastCryptoError,
-    hash::HashFunction,
+    //hash::HashFunction,
 };
-use rand::rngs::{StdRng, ThreadRng};
-use rand::{CryptoRng, RngCore};
-use serde::{de::DeserializeOwned, Serialize};
-use std::{
+// use rand::rngs::{StdRng, ThreadRng};
+// use rand::{CryptoRng, RngCore};
+// use serde::{de::DeserializeOwned, Serialize};
+use core::{
     borrow::Borrow,
     fmt::{Debug, Display},
     str::FromStr,
 };
+
+use core::convert::AsRef;
+use core::marker::{Send, Sync, Sized};
+use core::result::Result;
+use core::cmp::{Eq, Ord};
+use core::convert::From;
+use core::clone::Clone;
+use core::iter::{ExactSizeIterator, IntoIterator};
 
 /// Trait impl'd by concrete types that represent digital cryptographic material
 /// (keys).
@@ -43,25 +51,25 @@ pub trait ToFromBytes: AsRef<[u8]> + Debug + Sized {
     }
 }
 
-/// Cryptographic material with an immediate conversion to/from Base64 strings.
-///
-/// This is an [extension trait](https://rust-lang.github.io/rfcs/0445-extension-trait-conventions.html) of `ToFromBytes` above.
-///
-pub trait EncodeDecodeBase64: Sized {
-    fn encode_base64(&self) -> String;
-    fn decode_base64(value: &str) -> FastCryptoResult<Self>;
-}
+// /// Cryptographic material with an immediate conversion to/from Base64 strings.
+// ///
+// /// This is an [extension trait](https://rust-lang.github.io/rfcs/0445-extension-trait-conventions.html) of `ToFromBytes` above.
+// ///
+// pub trait EncodeDecodeBase64: Sized {
+//     fn encode_base64(&self) -> String;
+//     fn decode_base64(value: &str) -> FastCryptoResult<Self>;
+// }
 
-impl<T: ToFromBytes> EncodeDecodeBase64 for T {
-    fn encode_base64(&self) -> String {
-        Base64::encode(self.as_bytes())
-    }
+// impl<T: ToFromBytes> EncodeDecodeBase64 for T {
+//     fn encode_base64(&self) -> String {
+//         Base64::encode(self.as_bytes())
+//     }
 
-    fn decode_base64(value: &str) -> FastCryptoResult<Self> {
-        let bytes = Base64::decode(value)?;
-        <T as ToFromBytes>::from_bytes(&bytes)
-    }
-}
+//     fn decode_base64(value: &str) -> FastCryptoResult<Self> {
+//         let bytes = Base64::decode(value)?;
+//         <T as ToFromBytes>::from_bytes(&bytes)
+//     }
+// }
 
 /// Trait impl'd by public keys in asymmetric cryptography.
 ///
@@ -69,10 +77,8 @@ impl<T: ToFromBytes> EncodeDecodeBase64 for T {
 /// to the ones on its associated types for private and signature material.
 ///
 pub trait VerifyingKey:
-    Serialize
-    + DeserializeOwned
-    + std::hash::Hash
-    + Display
+    //std::hash::Hash
+    Display
     + Eq  // required to make some cached bytes representations explicit.
     + Ord // required to put keys in BTreeMap.
     + ToFromBytes
@@ -158,7 +164,7 @@ pub trait VerifyingKey:
 /// The trait bounds are implemented so as to be symmetric and equivalent
 /// to the ones on its associated types for public key and signature material.
 ///
-pub trait SigningKey: ToFromBytes + Serialize + DeserializeOwned + Send + Sync + 'static {
+pub trait SigningKey: ToFromBytes + Send + Sync + 'static {
     type PubKey: VerifyingKey<PrivKey = Self>;
     type Sig: Authenticator<PrivKey = Self>;
     const LENGTH: usize;
@@ -170,7 +176,7 @@ pub trait SigningKey: ToFromBytes + Serialize + DeserializeOwned + Send + Sync +
 /// to the ones on its associated types for private key and public key material.
 ///
 pub trait Authenticator:
-    ToFromBytes + Display + Serialize + DeserializeOwned + Send + Sync + 'static + Clone
+    ToFromBytes + Display + Send + Sync + 'static + Clone
 {
     type PubKey: VerifyingKey<Sig = Self>;
     type PrivKey: SigningKey<Sig = Self>;
@@ -187,7 +193,7 @@ pub trait Signer<Sig> {
 /// Trait impl'd by a public / private key pair in asymmetric cryptography.
 ///
 pub trait KeyPair:
-    Sized + From<Self::PrivKey> + Signer<Self::Sig> + EncodeDecodeBase64 + FromStr
+    Sized + From<Self::PrivKey> + Signer<Self::Sig> + FromStr
 {
     type PubKey: VerifyingKey<PrivKey = Self::PrivKey, Sig = Self::Sig>;
     type PrivKey: SigningKey<PubKey = Self::PubKey, Sig = Self::Sig>;
@@ -201,69 +207,69 @@ pub trait KeyPair:
     #[cfg(feature = "copy_key")]
     fn copy(&self) -> Self;
 
-    /// Generate a new keypair using the given RNG.
-    fn generate<R: AllowedRng>(rng: &mut R) -> Self;
+    // /// Generate a new keypair using the given RNG.
+    //fn generate<R: AllowedRng>(rng: &mut R) -> Self;
 }
 
-/// Trait impl'd by public / private keypairs that can generate recoverable signatures
-pub trait RecoverableSigner {
-    type PubKey;
-    type Sig: RecoverableSignature<Signer = Self, PubKey = Self::PubKey>;
+// /// Trait impl'd by public / private keypairs that can generate recoverable signatures
+// pub trait RecoverableSigner {
+//     type PubKey;
+//     type Sig: RecoverableSignature<Signer = Self, PubKey = Self::PubKey>;
 
-    /// Sign as a recoverable signature.
-    fn sign_recoverable(&self, msg: &[u8]) -> Self::Sig {
-        self.sign_recoverable_with_hash::<<<Self as RecoverableSigner>::Sig as RecoverableSignature>::DefaultHash>(msg)
-    }
+//     /// Sign as a recoverable signature.
+//     fn sign_recoverable(&self, msg: &[u8]) -> Self::Sig {
+//         self.sign_recoverable_with_hash::<<<Self as RecoverableSigner>::Sig as RecoverableSignature>::DefaultHash>(msg)
+//     }
 
-    /// Sign as a recoverable signature using the given hash function.
-    ///
-    /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
-    fn sign_recoverable_with_hash<H: HashFunction<32>>(&self, msg: &[u8]) -> Self::Sig;
-}
+//     // /// Sign as a recoverable signature using the given hash function.
+//     // ///
+//     // /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
+//     // fn sign_recoverable_with_hash<H: HashFunction<32>>(&self, msg: &[u8]) -> Self::Sig;
+// }
 
-pub trait VerifyRecoverable: Eq + Sized {
-    type Sig: RecoverableSignature<PubKey = Self>;
+// pub trait VerifyRecoverable: Eq + Sized {
+//     type Sig: RecoverableSignature<PubKey = Self>;
 
-    /// Verify a recoverable signature by recovering the public key and compare it to self.
-    fn verify_recoverable(&self, msg: &[u8], signature: &Self::Sig) -> Result<(), FastCryptoError> {
-        self.verify_recoverable_with_hash::<<<Self as VerifyRecoverable>::Sig as RecoverableSignature>::DefaultHash>(msg, signature)
-    }
+//     /// Verify a recoverable signature by recovering the public key and compare it to self.
+//     fn verify_recoverable(&self, msg: &[u8], signature: &Self::Sig) -> Result<(), FastCryptoError> {
+//         self.verify_recoverable_with_hash::<<<Self as VerifyRecoverable>::Sig as RecoverableSignature>::DefaultHash>(msg, signature)
+//     }
 
-    /// Verify a recoverable signature by recovering the public key and compare it to self.
-    /// The recovery is using the given hash function.
-    ///
-    /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
-    fn verify_recoverable_with_hash<H: HashFunction<32>>(
-        &self,
-        msg: &[u8],
-        signature: &Self::Sig,
-    ) -> Result<(), FastCryptoError> {
-        match signature.recover_with_hash::<H>(msg)? == *self {
-            true => Ok(()),
-            false => Err(FastCryptoError::InvalidSignature),
-        }
-    }
-}
+//     // /// Verify a recoverable signature by recovering the public key and compare it to self.
+//     // /// The recovery is using the given hash function.
+//     // ///
+//     // /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
+//     // fn verify_recoverable_with_hash<H: HashFunction<32>>(
+//     //     &self,
+//     //     msg: &[u8],
+//     //     signature: &Self::Sig,
+//     // ) -> Result<(), FastCryptoError> {
+//     //     match signature.recover_with_hash::<H>(msg)? == *self {
+//     //         true => Ok(()),
+//     //         false => Err(FastCryptoError::InvalidSignature),
+//     //     }
+//     // }
+// }
 
-/// Trait impl'd by recoverable signatures
-pub trait RecoverableSignature: Sized {
-    type PubKey;
-    type Signer: RecoverableSigner<Sig = Self, PubKey = Self::PubKey>;
-    type DefaultHash: HashFunction<32>;
+// /// Trait impl'd by recoverable signatures
+// pub trait RecoverableSignature: Sized {
+//     type PubKey;
+//     type Signer: RecoverableSigner<Sig = Self, PubKey = Self::PubKey>;
+//     //type DefaultHash: HashFunction<32>;
 
-    /// Recover the public key from this signature.
-    fn recover(&self, msg: &[u8]) -> Result<Self::PubKey, FastCryptoError> {
-        self.recover_with_hash::<Self::DefaultHash>(msg)
-    }
+//     /// Recover the public key from this signature.
+//     fn recover(&self, msg: &[u8]) -> Result<Self::PubKey, FastCryptoError> {
+//         self.recover_with_hash::<Self::DefaultHash>(msg)
+//     }
 
-    /// Recover the public key from this signature. Assuming that the given hash function was used for signing.
-    ///
-    /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
-    fn recover_with_hash<H: HashFunction<32>>(
-        &self,
-        msg: &[u8],
-    ) -> Result<Self::PubKey, FastCryptoError>;
-}
+//     // /// Recover the public key from this signature. Assuming that the given hash function was used for signing.
+//     // ///
+//     // /// Note: This is currently only used for Secp256r1 and Secp256k1 where the hash function must have 32 byte output.
+//     // fn recover_with_hash<H: HashFunction<32>>(
+//     //     &self,
+//     //     msg: &[u8],
+//     // ) -> Result<Self::PubKey, FastCryptoError>;
+// }
 
 /// Trait impl'd by aggregated signatures in asymmetric cryptography.
 ///
@@ -272,7 +278,7 @@ pub trait RecoverableSignature: Sized {
 /// where aggregation is not possible, a trivial implementation is provided.
 ///
 pub trait AggregateAuthenticator:
-    Display + Serialize + DeserializeOwned + Send + Sync + 'static + Clone
+    Display + Send + Sync + 'static + Clone
 {
     type Sig: Authenticator<PubKey = Self::PubKey>;
     type PubKey: VerifyingKey<Sig = Self::Sig>;
@@ -336,53 +342,53 @@ pub trait AggregateAuthenticator:
         messages: &[&[u8]],
     ) -> Result<(), FastCryptoError>;
 
-    /// Verify a batch of aggregate signatures, each consisting of a number of signatures over the same message.
-    ///
-    /// # Example
-    /// ```rust
-    /// use fastcrypto::{traits::{AggregateAuthenticator, KeyPair, Signer, VerifyingKey}};
-    /// use rand::thread_rng;
-    /// use fastcrypto::bls12381::min_sig::{BLS12381AggregateSignature, BLS12381KeyPair};
-    ///
-    /// let message1: &[u8] = b"Hello, world!";
-    /// let kp1 = BLS12381KeyPair::generate(&mut thread_rng());
-    /// let signature1 = kp1.sign(message1);
-    /// let aggregated_signature1 = BLS12381AggregateSignature::aggregate(vec!(&signature1)).unwrap();
-    /// let message2: &[u8] = b"1234";
-    /// let kp2 = BLS12381KeyPair::generate(&mut thread_rng());
-    /// let signature2 = kp2.sign(message2);
-    /// let aggregated_signature2 = BLS12381AggregateSignature::aggregate(vec!(&signature2)).unwrap();
-    ///
-    /// let aggregated_signatures = [&aggregated_signature1, &aggregated_signature2];
-    /// let messages = [message1, message2];
-    /// let pks1 = [kp1.public().clone()];
-    /// let pks2 = [kp2.public().clone()];
-    /// let public_keys = vec!(pks1.iter(), pks2.iter());
-    /// assert!(BLS12381AggregateSignature::batch_verify(&aggregated_signatures, public_keys, &messages).is_ok());
-    /// ```
-    fn batch_verify<'a>(
-        sigs: &[&Self],
-        pks: Vec<impl ExactSizeIterator<Item = &'a Self::PubKey>>,
-        messages: &[&[u8]],
-    ) -> Result<(), FastCryptoError>;
+    // /// Verify a batch of aggregate signatures, each consisting of a number of signatures over the same message.
+    // ///
+    // /// # Example
+    // /// ```rust
+    // /// use fastcrypto::{traits::{AggregateAuthenticator, KeyPair, Signer, VerifyingKey}};
+    // /// use rand::thread_rng;
+    // /// use fastcrypto::bls12381::min_sig::{BLS12381AggregateSignature, BLS12381KeyPair};
+    // ///
+    // /// let message1: &[u8] = b"Hello, world!";
+    // /// let kp1 = BLS12381KeyPair::generate(&mut thread_rng());
+    // /// let signature1 = kp1.sign(message1);
+    // /// let aggregated_signature1 = BLS12381AggregateSignature::aggregate(vec!(&signature1)).unwrap();
+    // /// let message2: &[u8] = b"1234";
+    // /// let kp2 = BLS12381KeyPair::generate(&mut thread_rng());
+    // /// let signature2 = kp2.sign(message2);
+    // /// let aggregated_signature2 = BLS12381AggregateSignature::aggregate(vec!(&signature2)).unwrap();
+    // ///
+    // /// let aggregated_signatures = [&aggregated_signature1, &aggregated_signature2];
+    // /// let messages = [message1, message2];
+    // /// let pks1 = [kp1.public().clone()];
+    // /// let pks2 = [kp2.public().clone()];
+    // /// let public_keys = vec!(pks1.iter(), pks2.iter());
+    // /// assert!(BLS12381AggregateSignature::batch_verify(&aggregated_signatures, public_keys, &messages).is_ok());
+    // /// ```
+    // fn batch_verify<'a>(
+    //     sigs: &[&Self],
+    //     pks: Vec<impl ExactSizeIterator<Item = &'a Self::PubKey>>,
+    //     messages: &[&[u8]],
+    // ) -> Result<(), FastCryptoError>;
 }
 
-/// Trait impl'd by cryptographic material that can be generated randomly such as keys and nonces.
-///
-pub trait Generate {
-    /// Generate a new random instance using the given RNG.
-    fn generate<R: AllowedRng>(rng: &mut R) -> Self;
-}
+// /// Trait impl'd by cryptographic material that can be generated randomly such as keys and nonces.
+// ///
+// pub trait Generate {
+//     /// Generate a new random instance using the given RNG.
+//     fn generate<R: AllowedRng>(rng: &mut R) -> Self;
+// }
 
-/// Trait impl'd by a keys/secret seeds for generating a secure instance.
-///
-pub trait FromUniformBytes<const LENGTH: usize>: ToFromBytes {
-    fn generate<R: AllowedRng>(rng: &mut R) -> Self {
-        let mut bytes = [0u8; LENGTH];
-        rng.fill_bytes(&mut bytes);
-        Self::from_bytes(&bytes).unwrap()
-    }
-}
+// /// Trait impl'd by a keys/secret seeds for generating a secure instance.
+// ///
+// pub trait FromUniformBytes<const LENGTH: usize>: ToFromBytes {
+//     fn generate<R: AllowedRng>(rng: &mut R) -> Self {
+//         let mut bytes = [0u8; LENGTH];
+//         rng.fill_bytes(&mut bytes);
+//         Self::from_bytes(&bytes).unwrap()
+//     }
+// }
 
 /// Trait for objects that support an insecure default value that should **only** be used as a
 /// placeholder.
@@ -390,13 +396,13 @@ pub trait InsecureDefault {
     fn insecure_default() -> Self;
 }
 
-// Whitelist the RNG our APIs accept (see https://rust-random.github.io/book/guide-rngs.html for
-// others).
-/// Trait impl'd by RNG's accepted by fastcrypto.
-pub trait AllowedRng: CryptoRng + RngCore {}
+// // Whitelist the RNG our APIs accept (see https://rust-random.github.io/book/guide-rngs.html for
+// // others).
+// /// Trait impl'd by RNG's accepted by fastcrypto.
+// pub trait AllowedRng: CryptoRng + RngCore {}
 
-// StdRng uses ChaCha12 (see https://github.com/rust-random/rand/issues/932).
-// It should be seeded with OsRng (e.g., StdRng::from_rng(OsRng)).
-impl AllowedRng for StdRng {}
-// thread_rng() uses OsRng for the seed, and ChaCha12 as the PRG function.
-impl AllowedRng for ThreadRng {}
+// // StdRng uses ChaCha12 (see https://github.com/rust-random/rand/issues/932).
+// // It should be seeded with OsRng (e.g., StdRng::from_rng(OsRng)).
+// impl AllowedRng for StdRng {}
+// // thread_rng() uses OsRng for the seed, and ChaCha12 as the PRG function.
+// impl AllowedRng for ThreadRng {}

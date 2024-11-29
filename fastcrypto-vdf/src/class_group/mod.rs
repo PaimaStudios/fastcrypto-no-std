@@ -17,8 +17,8 @@ use num_integer::Integer;
 use num_traits::{One, Signed, Zero};
 use serde::Deserialize;
 use serde::Serialize;
-use std::mem::swap;
-use std::ops::{Add, Neg};
+use core::mem::swap;
+use core::ops::{Add, Neg};
 
 #[cfg(test)]
 mod tests;

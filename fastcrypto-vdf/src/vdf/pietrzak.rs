@@ -8,8 +8,10 @@ use fastcrypto::error::FastCryptoResult;
 use fastcrypto::hash::{HashFunction, Keccak256};
 use num_bigint::BigUint;
 use num_integer::Integer;
+use core::mem;
+extern crate alloc;
+use alloc::vec::Vec;
 use serde::Serialize;
-use std::mem;
 
 /// Default size in bytes of the Fiat-Shamir challenge used in proving and verification.
 ///
@@ -42,7 +44,8 @@ impl<G: ParameterizedGroupElement> PietrzaksVDF<G> {
 
     /// Compute the Fiat-Shamir challenge used in Pietrzak's VDF construction.
     fn compute_challenge(&self, input: &G, output: &G, mu: &G) -> BigUint {
-        let seed = bcs::to_bytes(&(input, output, mu, self.iterations, &self.group_parameter))
+        //let seed = bcs::to_bytes(&(input, output, mu, self.iterations, &self.group_parameter))
+        let seed = postcard::to_allocvec(&(input, output, mu, self.iterations, &self.group_parameter))
             .expect("Failed to serialize Fiat-Shamir input.");
         let hash = Keccak256::digest(seed);
         BigUint::from_bytes_be(&hash.digest[..DEFAULT_CHALLENGE_SIZE_IN_BYTES])
