@@ -1,0 +1,10 @@
+[package]
+name = "prove-vdf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fastcrypto-vdf = { path = "../../fastcrypto-vdf", features = ["experimental"] }
+fastcrypto = { path = "../../fastcrypto" }
+num-bigint = { version = "0.4.4", default-features = false, features = ["serde"] }
+postcard = { version = "1.0.10", features = ["alloc"] }
